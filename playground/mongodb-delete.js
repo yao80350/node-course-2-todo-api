@@ -22,7 +22,7 @@ MongoClient.connect(url, (err, client) => {
   //   console.log(result);
   // });
 
-  db.collection('Todos').findOneAndDelete({completed: false}).then((result) => {
+  db.collection('Todos').findOneAndDelete({completed: false }).then((result) => {
     console.log(result);
   });
 
