@@ -1,4 +1,4 @@
-const {ObejctID} = require('mongoose');
+const {ObjectID} = require('mongodb');
 
 const {mongoose} = require('./../server/db/mongoose');
 const {Todo} = require('./../server/models/todo');
@@ -6,7 +6,7 @@ const {User} = require('./../server/models/user');
 
 let id = '5a538c0759783b00d04f14aa'; // 下面3种情况，Id格式没错，找不到 会返回[], null, null
 
-// if(!ObjectID.isvalid(id)) { //id是否有效
+// if(!ObjectID.isValid(id)) { //id是否有效
 //   console.log('ID not valid'); // id无效提示
 // }
 //
