@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
@@ -65,6 +66,33 @@ app.delete('/todos/:id', (req, res) => {
     }
     res.send({todo});
   }).catch((e) => res.status(400).send());
+});
+
+app.patch('/todos/:id', (req, res) => {
+  let id = req.params.id;
+  // _.pick() 从req.body内挑选 ['property'] ---这样加入的body只允许加选中的property
+  let body = _.pick(req.body, ['text', 'completed']); //req.body是送过来的值
+
+  if(!ObjectID.isValid(id)) {
+    return res.status(404).send();
+  }
+
+  if(_.isBoolean(body.completed) && body.completed) { //改动completed === false时 去掉原先加的时间
+    body.completedAt = new Date().getTime(); //completed === true时 加入改动时间 1970-现在的毫秒数
+  } else {
+    body.completed = false;
+    body.completedAt = null;
+  }
+
+  // {$set: {}} --- 更改  //{new: true} --- 返回更改后的值
+  Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+    if(!todo) {
+      return res.status(404).send();
+    }
+    res.send({todo});
+  }).catch((e) => {
+    res.status(400).send();
+  });
 });
 
 //event监听3000端口有没有被req
