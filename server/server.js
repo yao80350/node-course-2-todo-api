@@ -8,6 +8,7 @@ const {ObjectID} = require('mongodb');
 const {mongoose} = require('./db/mongoose');
 const {Todo} = require('./models/todo');
 const {User} = require('./models/user');
+const {authenticate} = require('./middleware/authenticate');
 
 let app = express();
 const port = process.env.PORT;
@@ -106,6 +107,11 @@ app.post('/users', (req, res) => {
   }).then((token) => {
     res.header('x-auth', token).send(user);
   }).catch((e) => res.status(400).send(e));
+});
+
+// 请求'/user/me'时 额外添加Headers内Key: x-auth; Value: '注册用户时存放在header里的token'
+app.get('/users/me', authenticate, (req, res) => {
+  res.send(req.user);
 });
 
 //event监听3000端口有没有被req

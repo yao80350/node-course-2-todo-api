@@ -55,6 +55,27 @@ UserSchema.methods.generateAuthToken = function () {
   });
 };
 
+//statics类似methods 不同：是User的method
+UserSchema.statics.findByToken = function(token) {
+  let User = this;
+  let decoded;
+
+  try {
+    decoded = jwt.verify(token, 'somesecret');
+  } catch (e) {
+    // return new Promise((resolve, reject) => {
+    //   reject();
+    // });
+    return Promise.reject(); //同上，做这步就会跳到server.js里call这个mothod下面的catch
+  }
+
+  return User.findOne({ //在User里找
+    _id: decoded._id,
+    'tokens.token': token, //找到tokens.token 需要用''
+    'tokens.access': 'auth'
+  });
+}
+
 //model里验真{} 写在let UserSchema = new mongoose.Schema({}); //结果一样
 //Obj User 是mongoose处理过的Obj 里面 不能加method，所有用到 new mongoose.Schema()
 let User = mongoose.model('User', UserSchema);
