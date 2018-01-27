@@ -10,7 +10,7 @@ const {Todo} = require('./models/todo');
 const {User} = require('./models/user');
 
 let app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 // 先在bash上运行node server.js 有端口被req时  就会触发app.use()
 // 有localhost:3000/todos被req时  就会触发app.post('/todos', () => {});
@@ -95,6 +95,17 @@ app.patch('/todos/:id', (req, res) => {
   }).catch((e) => {
     res.status(400).send();
   });
+});
+
+app.post('/users', (req, res) => {
+  let body = _.pick(req.body, ['email', 'password']);
+  let user = new User(body);
+
+  user.save().then(() => {
+    return user.generateAuthToken();
+  }).then((token) => {
+    res.header('x-auth', token).send(user);
+  }).catch((e) => res.status(400).send(e));
 });
 
 //event监听3000端口有没有被req
