@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator'); //验真
 const jwt = require('jsonwebtoken'); // 打码
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 let UserSchema = new mongoose.Schema({
   email: {
@@ -74,7 +75,22 @@ UserSchema.statics.findByToken = function(token) {
     'tokens.token': token, //找到tokens.token 需要用''
     'tokens.access': 'auth'
   });
-}
+};
+
+UserSchema.pre('save', function (next) { //event: save之前做
+  let user = this;
+
+  if (user.isModified('password')) {
+    bcrypt.genSalt(10, (err, salt) => {
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        user.password = hash;
+        next();
+      });
+    });
+  } else {
+    next();
+  }
+});
 
 //model里验真{} 写在let UserSchema = new mongoose.Schema({}); //结果一样
 //Obj User 是mongoose处理过的Obj 里面 不能加method，所有用到 new mongoose.Schema()
