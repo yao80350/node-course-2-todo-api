@@ -10,7 +10,7 @@ let UserSchema = new mongoose.Schema({
     required: true,
     minlength: 1,
     trim: true,
-    unique: true, //只能有一个
+    // unique: true, //只能有一个 // unique 做 test.js 会报错
     validate: { //自定义验真
       // validator: (value) => {
       //   return validator.isEmail(value);
@@ -80,10 +80,10 @@ UserSchema.statics.findByToken = function(token) {
 UserSchema.pre('save', function (next) { //event: save之前做
   let user = this;
 
-  if (user.isModified('password')) {
+  if (user.isModified('password')) { //user的property 'password'值有没有改变
     bcrypt.genSalt(10, (err, salt) => {
       bcrypt.hash(user.password, salt, (err, hash) => {
-        user.password = hash;
+        user.password = hash; //有改变就在save之前 hash
         next();
       });
     });
