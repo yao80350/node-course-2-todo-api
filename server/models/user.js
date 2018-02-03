@@ -56,6 +56,16 @@ UserSchema.methods.generateAuthToken = function () {
   });
 };
 
+UserSchema.methods.removeToken = function (token) {
+  let user = this;
+
+  return user.update({
+    $pull: { // 抽掉符合条件的
+      tokens: {token} // 满足 {token} 的tokens挖空 
+    }
+  });
+};
+
 //statics类似methods 不同：是User的method
 UserSchema.statics.findByToken = function(token) {
   let User = this;
