@@ -47,7 +47,7 @@ UserSchema.methods.toJSON = function () {
 UserSchema.methods.generateAuthToken = function () {
   let user = this;
   let access = 'auth';
-  let token = jwt.sign({_id: user._id.toHexString(), access}, 'somesecret');
+  let token = jwt.sign({_id: user._id.toHexString(), access}, process.env.JWT_SECRET);
 
   user.tokens.push({access, token});
 
@@ -61,7 +61,7 @@ UserSchema.methods.removeToken = function (token) {
 
   return user.update({
     $pull: { // 抽掉符合条件的
-      tokens: {token} // 满足 {token} 的tokens挖空 
+      tokens: {token} // 满足 {token} 的tokens挖空
     }
   });
 };
@@ -72,7 +72,7 @@ UserSchema.statics.findByToken = function(token) {
   let decoded;
 
   try {
-    decoded = jwt.verify(token, 'somesecret');
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (e) {
     // return new Promise((resolve, reject) => {
     //   reject();

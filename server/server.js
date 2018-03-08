@@ -18,9 +18,10 @@ const port = process.env.PORT;
 // 有localhost:3000/todos被req时  就会触发app.post('/todos', () => {});
 app.use(bodyParser.json());  //JSON 转成 obj
 
-app.post('/todos', (req, res) => {
+app.post('/todos', authenticate, (req, res) => {
   let todo = new Todo({
-    text: req.body.text
+    text: req.body.text,
+    _creator: req.user._id
   });
 
   todo.save().then((doc) => {
@@ -30,8 +31,10 @@ app.post('/todos', (req, res) => {
   });
 });
 
-app.get('/todos', (req, res) => {
-  Todo.find().then((todos) => {
+app.get('/todos', authenticate, (req, res) => {
+  Todo.find({
+    _creator: req.user._id
+  }).then((todos) => {
     res.send({todos});
   }, (e) => {
     res.status(400).send(e);
@@ -39,7 +42,7 @@ app.get('/todos', (req, res) => {
 });
 
 // GET /todos/12343242
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authenticate, (req, res) => {
   // res.send(req.params);
   let id = req.params.id;
 
@@ -47,7 +50,13 @@ app.get('/todos/:id', (req, res) => {
     return res.status(404).send();
   }
 
-  Todo.findById(id).then((todo) => {
+  Todo.findOne({
+    _id: id,
+    // 加入_creator，更安全： 查看的话，需要满足 _id, _creator
+    // 1. 没有登入就没有token --- call cuthenticate失败，就没有_creator
+    // 2. 创建todo时同时加入user的id到_creator，登入用户用他人_id查看，数据库里的二者不同时匹配，找不到。
+    _creator: req.user._id
+  }).then((todo) => {
     if(!todo) {
       return res.status(404).send();
     }
@@ -57,14 +66,17 @@ app.get('/todos/:id', (req, res) => {
   });
 });
 
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
   let id = req.params.id;
 
   if(!ObjectID.isValid(id)) {
     return res.status(404).send();
   }
 
-  Todo.findByIdAndRemove(id).then((todo) => {
+  Todo.findOneAndRemove({
+    _id: id,
+    _creator: req.user._id
+  }).then((todo) => {
     if(!todo) {
       return res.status(404).send();
     }
@@ -72,7 +84,7 @@ app.delete('/todos/:id', (req, res) => {
   }).catch((e) => res.status(400).send());
 });
 
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
   let id = req.params.id;
   // _.pick() 从req.body内挑选 ['property'] ---这样加入的body只允许加选中的property
   let body = _.pick(req.body, ['text', 'completed']); //req.body是送过来的值
@@ -89,7 +101,7 @@ app.patch('/todos/:id', (req, res) => {
   }
 
   // {$set: {}} --- 更改  //{new: true} --- 返回更改后的值
-  Todo.findByIdAndUpdate(id, {$set: body}, {new: true}).then((todo) => {
+  Todo.findOneAndUpdate({_id: id, _creator: req.user._id}, {$set: body}, {new: true}).then((todo) => {
     if(!todo) {
       return res.status(404).send();
     }
